@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: shipment-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: shipmentdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+
+  shipment-service:
+    build: .
+    container_name: shipment-service
+    depends_on:
+      - mysql
+    ports:
+      - "8082:8080"
+
+
+volumes:
+  mysql-data:
