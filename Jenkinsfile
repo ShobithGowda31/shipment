@@ -7,6 +7,13 @@ pipeline {
         maven 'Maven3'
     }
 
+    environment {
+        IMAGE_NAME = "shipment-service"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        DOCKER_REPO = "shobith031"
+    }
+
+
     stages {
 
         stage('Checkout') {
@@ -15,11 +22,13 @@ pipeline {
             }
         }
 
+
         stage('Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
+
 
         stage('Test') {
             steps {
@@ -27,11 +36,38 @@ pipeline {
             }
         }
 
+
+        stage('SonarQube') {
+            steps {
+                sh 'mvn sonar:sonar -Dsonar.projectKey=shipment-service'
+            }
+        }
+
+
         stage('Docker Build') {
             steps {
                 sh '''
                 docker build \
-                -t shipment-service:${BUILD_NUMBER} .
+                -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
+            }
+        }
+
+
+        stage('Trivy Scan') {
+            steps {
+                sh '''
+                trivy image ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                docker compose down
+                docker compose up -d --build
                 '''
             }
         }
